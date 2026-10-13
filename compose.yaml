@@ -40,6 +40,32 @@ services:
     networks:
       - app_network
 
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    volumes:
+      - ./backend/src:/var/www/html
+      - ./backend/apache.conf:/etc/apache2/conf-available/fallback.conf
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    networks:
+      - app_network
+
 networks:
   app_network:
 
