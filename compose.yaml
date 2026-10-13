@@ -1,0 +1,48 @@
+services:
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-p$${MARIADB_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - app_network
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - app_network
+
+  mailpit:
+    image: axllent/mailpit:v1.20
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+
+volumes:
+  mariadb_data:
+  redis_data:
